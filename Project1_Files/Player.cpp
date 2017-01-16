@@ -14,7 +14,7 @@
 #include <iostream>
 #include <string>
 #include "globals.h"
-#include "player.h"
+#include "Player.h"
 #include "Arena.h"
 using namespace std;
 
