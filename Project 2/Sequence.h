@@ -10,7 +10,7 @@
 #define Sequence_h
 
 #include <string>
-typedef int ItemType;
+typedef unsigned long ItemType;
 
 class Sequence
 {

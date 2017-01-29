@@ -319,6 +319,7 @@ void Sequence::swap(Sequence& other){
     
 }
 
+//dump prints out all node values in Linked List (i.e. the "Sequence" class)
 void Sequence::dump() const{
     Node *temp;
     temp = head;
