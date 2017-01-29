@@ -72,6 +72,8 @@ public:
     
     void swap(Sequence& other);
     // Exchange the contents of this sequence with the other one.
+    
+    void dump() const;
 
 
 private:
@@ -84,5 +86,12 @@ private:
     Node *head, *tail;
     int seq_size;
 };
+
+//non member functions
+
+int subsequence(const Sequence& seq1, const Sequence& seq2);
+
+void interleave(const Sequence& seq1, const Sequence& seq2, Sequence& result);
+
 
 #endif /* Sequence_h */

@@ -12,14 +12,20 @@
 
 void test1();
 void test2();
+void test_assign();
+void test_interleave();
+void test_subsequence();
 
 int main() {
-    test1();
-    test2();
-    
+//    test1();
+//    test2();
+//    test_assign();
+//    test_interleave();
+    test_subsequence();
     
     std::cerr<< "YAY!!!!!!"<<std::endl;
 }
+
 
 void test1(){
     Sequence s;
@@ -70,10 +76,75 @@ void test2(){
     Sequence b(s);
     
     assert( b.size()==4 && b.find(12) ==0);
+}
+
+void test_assign(){
+    Sequence a;
+    Sequence b;
     
+    a.insert(0);a.insert(1);a.insert(3);a.insert(7);a.insert(0, 12);
     
+    b=a;
     
+    a.dump();
+    b.dump();
     
+    assert((a.find(12)==b.find(12))&& (a.find(7)==b.find(7)));
     
+    a=a;
+    a.dump();
+    assert((a.find(12)==b.find(12))&& (a.find(7)==b.find(7)));
+
+}
+
+void test_interleave(){
+    Sequence c;
+    Sequence d;
+    Sequence e;
+    
+    c.insert(12);c.insert(2);c.insert(7);c.insert(6);
+    d.insert(0, 5);
+    d.insert(1, -3);
+    
+    c.dump(); d.dump(); e.dump();
+    
+    interleave(c, e, c);
+    c.dump();
+    
+    interleave(e, e, e);
+    e.dump();    
+
+    interleave(c, d, e);       //test normal function
+    interleave(d, d, d);    //test aliasing
+    
+    d.dump();
+    e.dump();
+}
+
+void test_subsequence(){
+    Sequence p;
+    Sequence q;
+    Sequence r;
+    Sequence s;
+    
+    assert(subsequence(p, q)==-1);
+    p.insert(32);
+    assert(subsequence(p, q)==-1 && subsequence(q, p)==-1);
+    
+    p.insert(0, 8);p.insert(0, 29);p.insert(0, 17);p.insert(0, 63);p.insert(0, 17);p.insert(0, 42);p.insert(0, 63);p.insert(0, 21);p.insert(0, 30);
+    q.insert(0, 29);q.insert(0, 17);q.insert(0, 63);
+    p.dump();
+    q.dump();
+    
+    assert(subsequence(p, q)==5 && subsequence(q, p)==-1);
+    
+    r.insert(0, 32);r.insert(0, 8);r.insert(0, 29);
+    r.dump();
+    assert(subsequence(p, r)==7);
+    
+    s.insert(0, 63);s.insert(0, 21);s.insert(0, 30);
+    s.dump();
+    
+    assert(subsequence(p, s)==0);
     
 }

@@ -7,6 +7,7 @@
 //
 
 #include "Sequence.h"
+#include <iostream>
 
 //constructor creates an empty Sequence with 0 size
 Sequence::Sequence(){
@@ -34,8 +35,13 @@ Sequence::Sequence(const Sequence &oldseq){
     
 }
 
-//assignment operator;
-Sequence& Sequence::operator=(const Sequence& otherseq);
+
+Sequence& Sequence::operator=(const Sequence& otherseq){
+    Sequence temp(otherseq);            // create a temporary copy of the other sequence
+    swap(temp);                         //swap current sequence with temp copy
+                                        //self-assignment should be no problem
+    return *this;
+}
 
 
 
@@ -300,6 +306,7 @@ int Sequence::find(const ItemType& value) const{
 void Sequence::swap(Sequence& other){
     Node *their_head = other.head;
     Node *their_tail = other.tail;
+    int m_size = seq_size;
     
     other.head = head;
     other.tail = tail;
@@ -307,8 +314,92 @@ void Sequence::swap(Sequence& other){
     head = their_head;
     tail = their_tail;
     
+    seq_size = other.seq_size;
+    other.seq_size = m_size;
+    
+}
+
+void Sequence::dump() const{
+    Node *temp;
+    temp = head;
+    while (temp!=nullptr){
+        std::cerr << temp->value << " ";
+        temp = temp->next;
+    }
+    std::cerr << std::endl;
 }
 
 
+int subsequence(const Sequence& seq1, const Sequence& seq2){
+    int k = -1;         //int to store position where seq2 is found as a subsequence of seq1 in seq1
+    ItemType x;
+    ItemType y;
+    
+    //no need to check for subsequence if seq2 is larger than seq 1, or is seq2 has no elements
+    if(seq2.size() > seq1.size() || seq2.size()==0){
+        return k;
+    }
+    
+    seq2.get(0, x);              //store value of first element in seq2 in x
+    
+    //check as long as seq2 can fit in seq1 at position i in seq1
+    for(int i = 0; i < seq1.size()-(seq2.size()-1) ; i++){
+        seq1.get(i, y);         //store value of first element in seq1 in y
+        if( y == x){            //if you find an element in seq1 with value == x
+            //check every subsequent element in seq1 to see if they match subsequent elements in seq2
+            for (int j = 1; j<seq2.size(); j++) {
+                ItemType temp1;
+                ItemType temp2;
+                seq1.get(i+j, temp1);
+                seq2.get(j, temp2);
+                
+                //if two elements are not equal retry
+                if(temp1!=temp2)
+                    break;
+               
+                //if all elements of seq2 are found sequentially in seq1 return the position in seq1 where the subsequence starts
+                if(j==seq2.size()-1){
+                    k=i;
+                    return k;
+                }
+            }
+        }
+        
+       
+    }
+    
+    return k;           //otherwise if seq2 is not found as a subsequence of seq1 return -1
+}
+
+
+void interleave(const Sequence& seq1, const Sequence& seq2, Sequence& result){
+    Sequence temp;                          //create a temp sequence to avoid aliasing (e.g result = seq_1)
+    
+    int curr1,curr2,curr_res;              //counters for current place in each repective sequence
+    curr1=curr2=curr_res=0;                 //i.e. seq1,seq2, result
+    
+    //loop to weave sequences together. keep going as long as one of the sequences still has nodes left
+    while (curr1 < seq1.size() || curr2 < seq2.size()){
+        
+        //insert node value at curr_res from seq1 so long as there are nodes left (i.e. a node exists as position curr1 in seq1)
+        if (curr1 < seq1.size()) {
+            ItemType x;
+            seq1.get(curr1, x);
+            temp.insert (curr_res,x);    //add value of x to temp at curr_res
+            curr1++; curr_res++;        //increment counter for place in seq1 and temp
+        }
+        
+        //analogous to above
+        if (curr2 < seq2.size()) {
+            ItemType y;
+            seq2.get(curr2, y);
+            temp.insert (curr_res,y);
+            curr2++; curr_res++;
+        }
+    }
+    
+    //once temp has been created by weaving together seq1 and seq2, swap result and temp
+    result.swap(temp);
+}
 
 
