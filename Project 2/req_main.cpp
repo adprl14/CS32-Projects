@@ -1,29 +1,29 @@
+////
+////  req_main.cpp
+////  CS32_Project2
+////
+////  Created by Andrew Perley on 1/29/17.
+////  Copyright © 2017 Andrew Perley. All rights reserved.
+////
 //
-//  req_main.cpp
-//  CS32_Project2
+//#include "Sequence.h"
+//#include <iostream>
+//#include <cassert>
+//using namespace std;
 //
-//  Created by Andrew Perley on 1/29/17.
-//  Copyright © 2017 Andrew Perley. All rights reserved.
+//void test()
+//{
+//    Sequence s;
+//    assert(s.insert(0, 10));
+//    assert(s.insert(0, 20));
+//    assert(s.size() == 2);
+//    ItemType x = 999;
+//    assert(s.get(0, x)  &&  x == 20);
+//    assert(s.get(1, x)  &&  x == 10);
+//}
 //
-
-#include "Sequence.h"
-#include <iostream>
-#include <cassert>
-using namespace std;
-
-void test()
-{
-    Sequence s;
-    assert(s.insert(0, 10));
-    assert(s.insert(0, 20));
-    assert(s.size() == 2);
-    ItemType x = 999;
-    assert(s.get(0, x)  &&  x == 20);
-    assert(s.get(1, x)  &&  x == 10);
-}
-
-int main()
-{
-    test();
-    cout << "Passed all tests" << endl;
-}
+//int main()
+//{
+//    test();
+//    cout << "Passed all tests" << endl;
+//}

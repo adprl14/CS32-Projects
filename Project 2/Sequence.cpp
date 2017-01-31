@@ -48,11 +48,17 @@ Sequence& Sequence::operator=(const Sequence& otherseq){
 Sequence::~Sequence(){
     Node *p;
     p=head;
+    int count = 0;
     while (p!=nullptr){
         Node *n = p->next;
         delete p;
+        seq_size--;
         p=n;
+        count++;
     }
+//    std::cerr << "I deleted "<< count << " nodes" << std::endl;
+//    std::cerr << "my size is now " << seq_size << std::endl;
+
 }
 
 
