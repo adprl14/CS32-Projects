@@ -33,6 +33,8 @@ Sequence::Sequence(const Sequence &oldseq){
         }
     }
     
+   
+    
 }
 
 
@@ -180,9 +182,9 @@ bool Sequence::erase(int pos){
         else if (head->next == nullptr && pos == 0){
             Node *temp;
             temp = head;
-            delete temp;
+            delete temp;        //get rid of only node
             head = nullptr;
-            tail = nullptr;
+            tail = nullptr;     //set head and tail to invalid pointers
             seq_size--;
             return true;
         }
@@ -190,7 +192,7 @@ bool Sequence::erase(int pos){
         else if(pos==0){
             Node *temp;
             temp = head;
-            head = temp->next;
+            head = temp->next;             //move head node up one
             temp->next->prev = nullptr;
             delete temp;
             seq_size--;
@@ -219,8 +221,8 @@ bool Sequence::erase(int pos){
             for (int i=0; i<pos; i++){
                 temp = temp->next;  //point temp at node to be deleted in the middle
             }
-            temp->next->prev = temp->prev;  //set next node's prev to node before temp
-            temp->prev->next = temp->next;  //set previous node's next to node after temp
+            temp->next->prev = temp->prev;  //set next node's "prev" to node before temp
+            temp->prev->next = temp->next;  //set previous node's "next"c to node after temp
             delete temp;
             seq_size--;
             return true;

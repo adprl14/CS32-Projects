@@ -10,7 +10,7 @@
 #define Sequence_h
 
 #include <string>
-typedef unsigned long ItemType;
+typedef std::string ItemType;
 
 class Sequence
 {
