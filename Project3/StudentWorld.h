@@ -22,10 +22,9 @@ public:
     virtual ~StudentWorld();
     
     virtual int init();
-    
     virtual int move();
-    
     virtual void cleanUp();
+    
     
     bool ActorListEmpty(int x, int y) const;
     bool Blocked(int x, int y) const;
@@ -36,6 +35,12 @@ public:
     void MakeActorsDoSomething();
     void killDeadActors();
     void MoveActorTo (std::list<Actor*>::iterator it, Actor::Direction direc);
+    void MoveActorTo (int destx, int desty, Actor* act);
+
+    void AllocateActor(int x, int y, std::string type);
+    Actor* PickRandomInsect (int x, int y);
+    
+    int GiveInsectFood(int x, int y, int amt);
     
 
     

@@ -26,7 +26,8 @@ public:
     virtual bool DoIBlockInsects() const {return false;}
     virtual bool AmIInsect() const {return false;}
     virtual bool AmIFood() const{return false;}
-    
+    virtual bool IsStunable() const{return false;}
+
     void DirecMoved(Direction Moved){
         MovedDirec = Moved;
     }
@@ -47,6 +48,158 @@ private:
     Direction MovedDirec;
     
 };
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////              Insect BASE                 ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+class Insect: public Actor{
+public:
+    Insect(StudentWorld* sWorld, int ImID, int x, int y, Direction direc, int depth):Actor(sWorld, ImID,x,y, direc, depth)
+    {
+        sleep_ticks = 0;
+    }
+    
+    virtual void doSomething() = 0;
+    virtual bool eat(int amt);
+    void doInsectStuff();
+    virtual void sleep(){sleep_ticks--;}
+    void stun(){sleep_ticks += 2;}
+    void die();
+    virtual bool Bite(int amt);
+    virtual void Move()=0;
+    
+    virtual bool IsStunable() const{return true;}
+    bool AmISleep() const {return !(sleep_ticks<=0);}
+    virtual bool AmIInsect() const{
+        return true;
+    }
+    
+private:
+    int sleep_ticks;
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////                GRASSHOPPERS              ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Still Abstract base
+class Grasshopper: public Insect{
+public:
+    Grasshopper(StudentWorld* sWorld, int ImID, int x, int y, Direction direc, int depth):Insect(sWorld, ImID,x,y, direc, depth){
+        DistToMove = randInt(2, 10);
+    }
+    virtual void doSomething() = 0;
+    void doGHstuff(); //Grasshopper common actions
+    virtual void Move();
+    
+    void Moved1Spot(){DistToMove--;}
+    void SetDistToZero(){DistToMove = 0;}
+    int DistRemaining() const{ return DistToMove;}
+    void PickDirection(){
+        if(DistToMove <= 0){
+            FaceRandDirec();
+            DistToMove = randInt(2, 10);
+        }
+    }
+private:
+    int DistToMove;
+    
+};
+
+
+
+class BabyGrasshopper:public Grasshopper{
+public:
+    BabyGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_BABY_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 1)
+    {
+        DirecMoved(none);
+        set_health(500);
+        died(false);
+    }
+    
+    virtual void doSomething();
+    void Evolve(); //NOT IMPLEMENTED YET
+   
+private:
+  
+};
+
+class AdultGrasshopper:public Grasshopper{
+public:
+    AdultGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_ADULT_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 1)
+    {
+        DirecMoved(none);
+        set_health(1600);
+        died(false);
+    }
+    
+    
+    virtual void doSomething();
+    
+private:
+    bool Jump();
+    
+    bool WillIBite(){
+        return (randInt(0, 2)==0);
+    }
+    bool WillIJump(){
+        return (randInt(0, 9)==0);
+    }
+
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////                ANTS                      ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+class Ant:public Insect{
+public:
+    
+private:
+};
+
+class AntHill:public Insect{
+public:
+    
+private:
+};
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////                OBJECTS                   ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+class Food: public Actor{
+public:
+    Food(StudentWorld* sWorld,int x, int y, int food):Actor( sWorld, IID_FOOD, x, y, right, 2){
+        set_health(food);
+        died(false);
+    }
+    
+    virtual void doSomething(){}
+    virtual bool AmIFood() const{return true;}
+
+    void addFood(int i){
+        int newFood = get_health() + i;
+        set_health(newFood);
+    }
+    
+private:
+    
+};
+
+class Pheromone: public Actor{
+    
+};
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////                Puddle OBJ                   ////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////                Pebble                    ////////////////////////////////
@@ -75,115 +228,6 @@ private:
     
 };
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////                GRASSHOPPERS              ////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-class Insect: public Actor{
-public:
-    Insect(StudentWorld* sWorld, int ImID, int x, int y, Direction direc, int depth):Actor(sWorld, ImID,x,y, direc, depth)
-    {
-        sleep_ticks = 0;
-    }
-    
-    virtual void doSomething() = 0;
-    void eat(){ /*DUMMY*/}
-    void doInsectStuff();
-    virtual void sleep(){sleep_ticks--;}
-    void stun(){sleep_ticks = 2;}
-    void die();
-    virtual void Move()=0;
 
-    bool AmISleep() const {return !(sleep_ticks==0);}
-    virtual bool AmIInsect() const{
-        return true;
-    }
-    
-private:
-    int sleep_ticks;
-};
-
-//Still Abstract base
-class Grasshopper: public Insect{
-public:
-    Grasshopper(StudentWorld* sWorld, int ImID, int x, int y, Direction direc, int depth):Insect(sWorld, ImID,x,y, direc, depth){
-        DistToMove = randInt(2, 10);
-    }
-    virtual void doSomething() = 0;
-    void doGHstuff(); //Grasshopper common actions
-    virtual void Move();
-    
-    
-    void Moved1Spot(){DistToMove--;}
-    void SetDistToZero(){DistToMove = 0;}
-    int DistRemaining() const{ return DistToMove;}
-    void PickDirection(){
-        if(DistToMove <= 0){
-            FaceRandDirec();
-            DistToMove = randInt(2, 10);
-        }
-    }
-private:
-    int DistToMove;
-};
-
-
-
-class BabyGrasshopper:public Grasshopper{
-public:
-    BabyGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_BABY_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 0)
-    {
-        DirecMoved(none);
-        set_health(500);
-        died(false);
-    }
-    
-    virtual void doSomething();
-    void Evolve(); //NOT IMPLEMENTED YET
-   
-private:
-  
-};
-
-class AdultGrasshopper:public Grasshopper{
-    AdultGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_ADULT_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 0)
-    {
-        
-    }
-};
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////                ANTS                      ////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////                OBJECTS                   ////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-class Food: public Actor{
-public:
-    Food(StudentWorld* sWorld,int x, int y, int food):Actor( sWorld, IID_FOOD, x, y, right, 2){
-        set_health(food);
-        died(false);
-    }
-    
-    virtual void doSomething(){}
-    virtual bool AmIFood() const{return true;}
-
-    void addFood(int i){
-        int newFood = get_health() + i;
-        set_health(newFood);
-    }
-    
-private:
-    
-};
 
 #endif // ACTOR_H_
