@@ -41,6 +41,20 @@ StudentWorld::~StudentWorld(){
                 }
                     break;
                 
+                case Field::water:
+                {
+                    Actor* p= new PoolOfWater(this, i, j );
+                    ActorGrid[i][j].push_back(p);
+                }
+                    break;
+               
+                case Field::poison:
+                {
+                    Actor* p= new Poison(this, i, j );
+                    ActorGrid[i][j].push_back(p);
+                }
+                    break;
+                
                 case Field::food:
                 {
                     Actor *p = new Food(this, i, j, 6000);
@@ -104,6 +118,17 @@ void StudentWorld::cleanUp(){
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////      Other Functions       //////////////////////////////////
@@ -182,7 +207,7 @@ void StudentWorld::MakeActorsDoSomething(){
                 if((*it2)->WheredidIMove()!= Actor::Direction::none)
                     continue;
                 
-                if(!((*it2)->AmIDead()) && ((*it2)->get_health())> 0){
+                if(!((*it2)->AmIDead()) ){
 //                    cerr<< i <<" " <<j << " ";
 //                    cerr<< (*it2)->getX()<<" " <<(*it2)->getY() << endl;
                     
@@ -308,7 +333,7 @@ int StudentWorld::GiveInsectFood(int x, int y, int amt){
     }
     
     int food = (*it)->get_health();
-    if(food>=amt){
+    if(food>amt){
         (*it)->set_health(food - amt);
         return amt;
     }
@@ -319,6 +344,34 @@ int StudentWorld::GiveInsectFood(int x, int y, int amt){
     }
     }
     return 0;
+}
+
+
+void StudentWorld::StunAllStunableActors(int x, int y, Actor* water){
+    list<Actor*>::iterator it;
+    for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
+        if((*it)->IsStunable() && ((*it)->stun_er() != water)){
+            (*it)->stun();
+            (*it)->StunnedMe(water);
+        }
+    }
+}
+
+void StudentWorld::PoisonAllPoisonableActors(int x, int y, Actor* poison){
+    list<Actor*>::iterator it;
+    for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
+        if((*it)->IsPoisonable()&& ((*it)->poison_er()!= poison)){
+            cerr<<"poisoning " << (*it)->get_health();
+            (*it)->poison();
+            (*it)->PoisonedMe(poison);
+            cerr<<" to " << (*it)->get_health() << endl;
+            
+            if((*it)->get_health()<=0){
+                (*it)->die();
+            }
+        }
+    }
+    
 }
 
 

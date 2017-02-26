@@ -58,17 +58,23 @@ bool Insect::eat(int amt){
     return false;
 }
 
+//Bites a random target at same location
 bool Insect::Bite(int amt){
     Actor* target = getWorld()->PickRandomInsect(getX(), getY());
     if(target!=nullptr){
         target->set_health(target->get_health() - amt);
         
+      //  cerr<< "I bit " << "(" << target->getX() << "," << target->getY()<< ") with " << target->get_health() << endl;
         if(target->get_health() <=0)
-            target->died(true);
+            target->die();
         return true;
     }
     
     return false;
+}
+
+void Insect::poison(){
+    set_health(get_health()-150);
 }
 
 
@@ -128,7 +134,16 @@ void Grasshopper::Move(){
         default:
             break;
     }
+    StunnedMe(nullptr);
+    PoisonedMe(nullptr);
 
+}
+
+void Grasshopper::PickDirection(){
+    if(DistToMove <= 0){
+        FaceRandDirec();
+        DistToMove = randInt(2, 10);
+    }
 }
 
 
@@ -156,6 +171,7 @@ void BabyGrasshopper::doSomething(){
     
     if(get_health()>=1600){
         Evolve();
+        cerr << "I Evolved!" << endl;
         return;
     }
     
@@ -168,12 +184,12 @@ void BabyGrasshopper::doSomething(){
     
     PickDirection();
     
-    //SKIP TO MOVEMENT FOR PART #1
     Move();
     
     stun();
 }
 
+//makes BabyGrasshopper die off and allocates new AdultGrasshopper object in its place
 void BabyGrasshopper::Evolve(){
     getWorld()->AllocateActor(getX(), getY(), "AdultGrasshopper");
     die();
@@ -186,8 +202,9 @@ void BabyGrasshopper::Evolve(){
 
 
 
-//JUST A TEMP COPY OF BABY GRASSHOPPER
+//Adult Grasshopper AI
 void AdultGrasshopper::doSomething(){
+    //if not true then the grasshopper already moved this turn
     if(WheredidIMove()!=Actor::Direction::none)
         return;
     
@@ -224,6 +241,8 @@ void AdultGrasshopper::doSomething(){
     
 }
 
+//Jumps an Adult Grasshopper to a random location within a circular radius of 10
+//If successful returns true, otherwise returns false(i.e all positions within radius of 10 are blocked)
 bool AdultGrasshopper::Jump(){
     double m_x = getX();
     double m_y = getY();
@@ -243,10 +262,10 @@ bool AdultGrasshopper::Jump(){
         int JumpSpot = randInt(0, JumpVec.size()-1);
         double destX = JumpVec[JumpSpot].first;
         double destY = JumpVec[JumpSpot].second;
-        cerr<< getX() << " " << getY() << " ";
+      //  cerr<< "(" << getX() << " " << getY() << ")" << " to ";
         getWorld()->MoveActorTo(destX, destY, this);
-        moveTo(destX, destY);
-        cerr<< getX() << " " << getY() << endl;
+       moveTo(destX, destY);
+       // cerr<< "(" <<getX() << " " << getY() << ")" << endl;
         return true;
 
     }
@@ -254,6 +273,18 @@ bool AdultGrasshopper::Jump(){
 
 }
 
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////     All PuddleBase and derived CODE         ////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+void PoolOfWater::doSomething(){
+    getWorld()->StunAllStunableActors(getX(), getY(), this);
+}
+
+void Poison::doSomething(){
+    getWorld()->PoisonAllPoisonableActors(getX(), getY(), this);
+}
 
 
 

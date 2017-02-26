@@ -42,38 +42,15 @@ public:
     
     int GiveInsectFood(int x, int y, int amt);
     
+    void StunAllStunableActors (int x, int y, Actor* water);
+    void PoisonAllPoisonableActors (int x, int y, Actor* poison);
+
+    
 
     
 private:
     std::list<Actor*> ActorGrid[VIEW_WIDTH][VIEW_HEIGHT];
     int Ticks;
-    
-    
-    
-    
-    
-    //    void ActorIter ( void (*f)(int i, int j)){
-    //        for(int i=0; i<VIEW_WIDTH; i++)
-    //        {
-    //            for(int j = 0; i<VIEW_HEIGHT; j++)
-    //            {
-    //
-    //                f(i,j);
-    //
-    //            }
-    //
-    //        }
-    //    }
-    //
-    //    void CleanActors(int i,int j){
-    //        if(!ActorContainer[i][j].empty())
-    //        {
-    //        for(std::list<Actor*>::iterator it = ActorContainer[i][j].begin(); it != ActorContainer[i][j].end();){
-    //            delete *it;
-    //            it = ActorContainer[i][j].erase(it);
-    //        }
-    //    }
-    //    }
     
 };
 
