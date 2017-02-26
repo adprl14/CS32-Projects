@@ -22,7 +22,6 @@ bool Actor::AmIBlocked(int x, int y) const{
     if(m_sw->ActorListEmpty(x, y)){
         return false;
     }
-    
     //only insects will ever need this function
     if(m_sw->Blocked(x,y))
     {
@@ -65,8 +64,20 @@ bool Insect::Bite(int amt){
         target->set_health(target->get_health() - amt);
         
       //  cerr<< "I bit " << "(" << target->getX() << "," << target->getY()<< ") with " << target->get_health() << endl;
-        if(target->get_health() <=0)
+        if(target->get_health() <=0){
             target->die();
+            cerr << "target killed" << endl;
+        }
+        if(!target->AmIDead()){
+            AdultGrasshopper* ap =dynamic_cast<AdultGrasshopper*>(target);
+            if(ap!=nullptr){
+                if(randInt(0, 1)==0){
+                    cerr<< "(" << target->getX() << "," << target->getY()<< ") Bite-back " << "(" << getX() << "," << getY()<< ")" <<endl;
+                    ap->Bite(50);
+                }
+            }
+        }
+        
         return true;
     }
     
@@ -289,6 +300,14 @@ void Poison::doSomething(){
 
 
 
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////         OBJECTS CODE                        ////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
-
-
+void Pheromone::doSomething(){
+    set_health(get_health() -1);
+    
+    if(get_health() <= 0){
+        died(true);
+    }
+}

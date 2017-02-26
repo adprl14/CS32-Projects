@@ -351,6 +351,7 @@ void StudentWorld::StunAllStunableActors(int x, int y, Actor* water){
     list<Actor*>::iterator it;
     for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
         if((*it)->IsStunable() && ((*it)->stun_er() != water)){
+            cerr<< "get stunned"<<endl;
             (*it)->stun();
             (*it)->StunnedMe(water);
         }
