@@ -2,6 +2,7 @@
 #include "StudentWorld.h"
 #include "GraphObject.h"
 #include "GameConstants.h"
+#include "Compiler.h"
 #include <algorithm>
 #include <utility>
 #include  <cmath>
@@ -18,7 +19,7 @@ using namespace std;
 ///////////////////////        HELPER CODE         /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-bool Actor::AmIBlocked(int x, int y) const{
+bool Actor::AmIBlocked(const int& x,const int& y) const{
     if(m_sw->ActorListEmpty(x, y)){
         return false;
     }
@@ -222,8 +223,6 @@ void AdultGrasshopper::doSomething(){
     Insect::doInsectStuff();
     
     if(get_health() <= 0){
-        //ADD FOOD HERE
-        //Insect dies :(
         die();
         return;
     }
@@ -234,7 +233,7 @@ void AdultGrasshopper::doSomething(){
     }
     
     if(WillIBite()){
-        Bite(50);
+        GHbite();
     }
     else if (WillIJump()){
         Jump();
@@ -285,13 +284,14 @@ void AdultGrasshopper::Jump(){
 }
 bool AdultGrasshopper::WillIBite(){
     bool BiteChance = (randInt(0, 2)==0);
-    return BiteChance;
+    bool OtherInsect = (getWorld()->PickRandomInsect(getX(), getY(), this)!=nullptr);
+    return (BiteChance&&OtherInsect);
 }
 
 //If there is another place to jump to return true 1/10 of the time otherwise false
-bool AdultGrasshopper::WillIJump(){ double m_x = getX();
+bool AdultGrasshopper::WillIJump(){
+    double m_x = getX();
     double m_y = getY();
-    std::vector<pair<double,double>> JumpVec;
     
     for (double i = 0; i<VIEW_WIDTH; i+=1){
         for (double j = 0; j<VIEW_HEIGHT; j+=1){
@@ -309,6 +309,205 @@ bool AdultGrasshopper::WillIJump(){ double m_x = getX();
     
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////                 ANT CODE                    ////////////////
+////////////////////////////////////////////////////////////////////////////////////
+void Ant::doSomething(){
+    doInsectStuff();
+    
+    if(get_health() <= 0){
+        die();
+        return;
+    }
+    
+    if(AmISleep()){
+        sleep();
+        return;
+    }
+    FaceRandDirec();
+    Move();
+    stun();
+}
+
+void Ant::Move(){
+    Direction curDirec = getDirection();
+    switch (curDirec) {
+        case GraphObject::right:
+            if(AmIBlocked(getX()+1, getY())){
+                                stun();
+                return;
+            }
+            DirecMoved(right);
+            moveTo(getX()+1, getY());
+            break;
+            
+        case GraphObject::left:
+            if(AmIBlocked(getX()-1, getY())){
+                stun();
+                return;
+            }
+            DirecMoved(left);
+            moveTo(getX()-1, getY());
+            break;
+            
+        case GraphObject::up:
+            if(AmIBlocked(getX(), getY()+1)){
+                stun();
+                return;
+            }
+            DirecMoved(up);
+            moveTo(getX(), getY()+1);
+            break;
+            
+        case GraphObject::down:
+            if(AmIBlocked(getX(), getY()-1)){
+                stun();
+                return;
+            }
+            DirecMoved(down);            
+            moveTo(getX(), getY()-1);
+            break;
+            
+        default:
+            break;
+    }
+    StunnedMe(nullptr);
+    PoisonedMe(nullptr);
+    
+}
+
+bool Ant::RunCommand(const Compiler::Command& c){
+    
+    if (c.opcode == Compiler::goto_command){
+        
+    }
+    else if (c.opcode == Compiler::if_command){
+            
+    }
+    else if (c.opcode == Compiler::emitPheromone){
+            
+    }
+    else if (c.opcode == Compiler::faceRandomDirection){
+            
+    }
+    else if (c.opcode == Compiler::rotateClockwise){
+        rotateTheAntClockwise();
+    }
+    else if (c.opcode == Compiler::rotateCounterClockwise){
+        rotateTheAntCounterClockwise();
+    }
+    
+    else if (c.opcode == Compiler::moveForward){
+        Move();
+    }
+    else if (c.opcode == Compiler::bite){
+        AntBite();
+    }
+    else if (c.opcode == Compiler::pickupFood){
+        FoodPickUp();
+    }
+    else if (c.opcode == Compiler::dropFood){
+        FoodDrop();
+    }
+    else if (c.opcode == Compiler::eatFood){
+        
+    }
+    else if (c.opcode == Compiler::generateRandomNumber){
+        
+    }
+    
+    return false;
+}
+
+void Ant::rotateTheAntClockwise(){
+    switch (getDirection()) {
+        case GraphObject::up:
+            setDirection(right);
+            break;
+        case GraphObject::right:
+            setDirection(down);
+            break;
+        case GraphObject::down:
+            setDirection(left);
+            break;
+        case GraphObject::left:
+            setDirection(up);
+            break;
+        default:
+            break;
+    }
+}
+
+void Ant::rotateTheAntCounterClockwise(){
+    switch (getDirection()) {
+        case GraphObject::up:
+            setDirection(left);
+            break;
+        case GraphObject::left:
+            setDirection(down);
+            break;
+        case GraphObject::down:
+            setDirection(right);
+            break;
+        case GraphObject::right:
+            setDirection(up);
+            break;
+        default:
+            break;
+    }
+}
+
+void Ant::FoodPickUp(){
+    int PickUpAmt(0);
+    if(getFood()<MAX_ANT_FOOD){
+        if(MAX_ANT_FOOD-getFood()>=400)
+            PickUpAmt = 400;
+        else
+            PickUpAmt = MAX_ANT_FOOD-getFood();
+    }
+    
+    int MoreFood = getWorld()->GiveInsectFood(getX(), getY(), PickUpAmt);
+    setFood(getFood()+MoreFood);
+}
+
+
+void Ant::FoodDrop(){
+    getWorld()->AddFood(getX(), getY(), getFood());
+    setFood(0);
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////
+///////////////////////             ANTHILL CODE                    ////////////////
+////////////////////////////////////////////////////////////////////////////////////
+
+void AntHill::doSomething(){
+    set_health(get_health()-1);
+   
+    if(get_health() <= 0){
+        died(true);
+        return;
+    }
+    
+    if(getWorld()->isThereFood(getX(), getY())){
+        eat(10000);
+        return;
+    }
+    
+    if(get_health()>=2000){
+        ProduceAnt();
+    }
+
+    
+}
+
+void AntHill::ProduceAnt(){
+    getWorld()->MakeAnt(getX(), getY(), getColony(), getCompiler());
+    set_health(get_health()-1500);
+    antsProduced++;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////     All PuddleBase and derived CODE         ////////////////
@@ -321,8 +520,6 @@ void PoolOfWater::doSomething(){
 void Poison::doSomething(){
     getWorld()->PoisonAllPoisonableActors(getX(), getY(), this);
 }
-
-
 
 
 ////////////////////////////////////////////////////////////////////////////////////

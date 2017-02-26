@@ -15,6 +15,12 @@ GameWorld* createStudentWorld(string assetDir)
 
 StudentWorld::~StudentWorld(){
     cleanUp();
+    for(int i = 0; i<4; i++){
+        if(compilerForEntrant[i] != nullptr){
+            delete compilerForEntrant[i];
+        }
+
+    }
 }
 
  int StudentWorld::init()
@@ -23,25 +29,51 @@ StudentWorld::~StudentWorld(){
     string fieldFile = getFieldFilename();
     string error;
 
-    Compiler *compilerForEntrant0, *compilerForEntrant1,
-    *compilerForEntrant2, *compilerForEntrant3;
     AntHill *ah0, *ah1, *ah2, *ah3;
     
     std::vector<std::string> fileNames = getFilenamesOfAntPrograms();
-    compilerForEntrant0 = new Compiler;
     std::string errorComp;
-    if ( ! compilerForEntrant0->compile(fileNames[0], errorComp) )
+    cerr<<fileNames.size()<<endl;
+//Compile all Bugs Files
+    for (int i = 0; i < fileNames.size();i++)
     {
-        setError(fileNames[0] + " " + error);
+        compilerForEntrant[i] = new Compiler;
+            if ( ! compilerForEntrant[i]->compile(fileNames[i], errorComp) )
+            {
+                setError(fileNames[i] + " " + error);
+            }
     }
-   
     
+    //MANUALLY
+//    compilerForEntrant[0] = new Compiler;
+//    if ( ! compilerForEntrant[0]->compile(fileNames[0], errorComp) )
+//    {
+//        setError(fileNames[0] + " " + error);
+//    }
+//    compilerForEntrant[1] = new Compiler;
+//    if ( ! compilerForEntrant[1]->compile(fileNames[1], errorComp) )
+//    {
+//        setError(fileNames[1] + " " + error);
+//    }
+//    compilerForEntrant[2] = new Compiler;
+//    if ( ! compilerForEntrant[2]->compile(fileNames[2], errorComp) )
+//    {
+//        setError(fileNames[2] + " " + error);
+//    }
+//    compilerForEntrant[3] = new Compiler;
+//    if ( ! compilerForEntrant[3]->compile(fileNames[3], errorComp) )
+//    {
+//        setError(fileNames[3] + " " + error);
+//    }
+
+    
+//Load Field
     if (f.loadField(fieldFile, error) != Field::LoadResult::load_success) {
         setError(fieldFile + " " + error);
         cerr<< error;
         return GWSTATUS_LEVEL_ERROR; // something bad happened!
     }
-    
+//Allocate all members in field
     for(int i=0; i<VIEW_WIDTH; i++){
         for(int j = 0; j<VIEW_HEIGHT; j++){
             
@@ -83,14 +115,42 @@ StudentWorld::~StudentWorld(){
                     //  cerr<< "G: (" << i << "," << j << ")" << endl;
                 }
                     break;
+                
                 case Field::anthill0:
                 {
-                    ah0 = new AntHill(this ,zero,i,j, compilerForEntrant0);
+                    ah0 = new AntHill(this ,zero,i,j, compilerForEntrant[0]);
                     ActorGrid[i][j].push_back(ah0);
+                    ColonyCoord[0].first=i;
+                    ColonyCoord[0].second=j;
                 }
                     break;
                     
-
+                case Field::anthill1:
+                {
+                    ah1 = new AntHill(this ,one,i,j, compilerForEntrant[1]);
+                    ActorGrid[i][j].push_back(ah1);
+                    ColonyCoord[1].first=i;
+                    ColonyCoord[1].second=j;
+                }
+                    break;
+                
+                case Field::anthill2:
+                {
+                    ah2 = new AntHill(this ,two,i,j, compilerForEntrant[2]);
+                    ActorGrid[i][j].push_back(ah2);
+                    ColonyCoord[2].first=i;
+                    ColonyCoord[2].second=j;
+                }
+                    break;
+                
+                case Field::anthill3:
+                {
+                    ah3 = new AntHill(this ,three,i,j, compilerForEntrant[3]);
+                    ActorGrid[i][j].push_back(ah3);
+                    ColonyCoord[3].first=i;
+                    ColonyCoord[3].second=j;
+                }
+                    break;
                     
                 default:
                     break;
@@ -111,8 +171,13 @@ int StudentWorld::move()
     
     killDeadActors();
   
-    if(Ticks==2000)
+    if(Ticks==MAX_TICKS){
+        if(isThereAWinningAnt()){
+            setWinner(GetWinningAntName());
+            return GWSTATUS_PLAYER_WON;
+        }
         return GWSTATUS_NO_WINNER;
+    }
     
     return GWSTATUS_CONTINUE_GAME;
 
@@ -320,8 +385,8 @@ void StudentWorld::AllocateActor(int x, int y, string type){
         Actor *p = new AdultGrasshopper(this, x, y);
         ActorGrid[x][y].push_back(p);
     }
-    
 }
+
 
 
 //PICKS RANDOM ALIVE INSECT not equal to self, RETURN nullptr if no alive insects
@@ -395,6 +460,89 @@ void StudentWorld::PoisonAllPoisonableActors(int x, int y, Actor* poison){
     }
     
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////
+////////////////////////         TRACKING ANTS            /////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+
+void StudentWorld::MakeAnt(int x, int y, int Num, Compiler *comp){
+    int ID;
+    switch(Num){
+        case 0:
+            ID = IID_ANT_TYPE0;
+            break;
+        case 1:
+            ID = IID_ANT_TYPE1;
+            break;
+        case 2:
+            ID = IID_ANT_TYPE2;
+            break;
+        case 3:
+            ID = IID_ANT_TYPE3;
+            break;
+        default:
+            return;
+    }
+    AddAnt(Num);
+    Actor *ant = new Ant(this, ID,Num, x, y, comp );
+    ActorGrid[x][y].push_back(ant);
+}
+
+void StudentWorld::AddAnt(int Num){
+    antsProducedBy[Num].first++;
+    antsProducedBy[Num].second = MAX_TICKS-Ticks;
+}
+
+
+bool StudentWorld::isThereAWinningAnt(){
+    for (int i = 0; i<4; i++){
+        if (antsProducedBy[i].first>=6) {
+            return true;
+        }
+    }
+    return false;
+}
+
+int StudentWorld::GetWinningAntNumber(){
+    std::pair<int, int> temp[4];
+    for(int i = 0; i<4; i++){
+        temp[i] = antsProducedBy[i];
+    }
+    
+    sort(begin(temp), end(temp));
+    
+    for(int j = 0; j<4; j++){
+        if(temp[3] == antsProducedBy[j])
+            return j;
+    }
+    return randInt(0,3);
+}
+
+Actor* StudentWorld::GetWinningAnt(){
+    int AntNum = GetWinningAntNumber();
+    int colonyX = ColonyCoord[AntNum].first;
+    int colonyY = ColonyCoord[AntNum].second;
+    std::list<Actor*> ColonySpot = ActorGrid[colonyX][colonyY];
+    if( ColonySpot.empty())
+        return nullptr;
+    std::list<Actor*>::iterator it;
+    for( it = ColonySpot.begin();it != ColonySpot.end();it++){
+        if((*it)->AmIAnthill())
+            return *it;
+    }
+    return nullptr;
+}
+
+
+std::string StudentWorld::GetWinningAntName(){
+    AntHill* curWinner = dynamic_cast<AntHill*>(GetWinningAnt());
+    if(curWinner!=nullptr){
+        return curWinner->getCompiler()->getColonyName();
+    }
+    return "";
+}
+
 
 
 

@@ -5,10 +5,12 @@
 #include "GameConstants.h"
 #include "Actor.h"
 #include "Field.h"
+#include "Compiler.h"
 #include <string>
 #include <list>
 
 // Students:  Add code to this file, StudentWorld.cpp, Actor.h, and Actor.cpp
+const int MAX_TICKS = 2000;
 
 class StudentWorld : public GameWorld
 {
@@ -17,6 +19,14 @@ public:
     : GameWorld(assetDir)
     {
         Ticks = 0;
+        for(int i = 0; i<4; i++){
+            antsProducedBy[i].first =0;
+            antsProducedBy[i].second = 0;
+            
+        }
+        for(int i = 0; i<4; i++){
+            compilerForEntrant[i] = nullptr;
+        }
     }
     
     virtual ~StudentWorld();
@@ -24,6 +34,7 @@ public:
     virtual int init();
     virtual int move();
     virtual void cleanUp();
+    
     
     
     bool ActorListEmpty(int x, int y) const;
@@ -44,6 +55,13 @@ public:
     
     void StunAllStunableActors (int x, int y, Actor* water);
     void PoisonAllPoisonableActors (int x, int y, Actor* poison);
+    
+    void MakeAnt(int x, int y,int Num, Compiler *comp);
+    void AddAnt(int Num);
+    Actor* GetWinningAnt();
+    int GetWinningAntNumber();
+    bool isThereAWinningAnt();
+    std::string GetWinningAntName();
 
     
 
@@ -51,7 +69,9 @@ public:
 private:
     std::list<Actor*> ActorGrid[VIEW_WIDTH][VIEW_HEIGHT];
     int Ticks;
-    
+    std::pair<int,int> antsProducedBy[4];
+    std::pair<int,int> ColonyCoord[4];
+    Compiler *compilerForEntrant[4];
 };
 
 #endif // STUDENTWORLD_H_
