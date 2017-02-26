@@ -1,6 +1,7 @@
 #include "StudentWorld.h"
 #include "GameWorld.h"
 #include "GameConstants.h"
+#include "Compiler.h"
 #include "Actor.h"
 #include "Field.h"
 #include <string>
@@ -21,7 +22,20 @@ StudentWorld::~StudentWorld(){
     Field f;
     string fieldFile = getFieldFilename();
     string error;
-    // cerr << "im starting";
+
+    Compiler *compilerForEntrant0, *compilerForEntrant1,
+    *compilerForEntrant2, *compilerForEntrant3;
+    AntHill *ah0, *ah1, *ah2, *ah3;
+    
+    std::vector<std::string> fileNames = getFilenamesOfAntPrograms();
+    compilerForEntrant0 = new Compiler;
+    std::string errorComp;
+    if ( ! compilerForEntrant0->compile(fileNames[0], errorComp) )
+    {
+        setError(fileNames[0] + " " + error);
+    }
+   
+    
     if (f.loadField(fieldFile, error) != Field::LoadResult::load_success) {
         setError(fieldFile + " " + error);
         cerr<< error;
@@ -69,7 +83,14 @@ StudentWorld::~StudentWorld(){
                     //  cerr<< "G: (" << i << "," << j << ")" << endl;
                 }
                     break;
+                case Field::anthill0:
+                {
+                    ah0 = new AntHill(this ,zero,i,j, compilerForEntrant0);
+                    ActorGrid[i][j].push_back(ah0);
+                }
+                    break;
                     
+
                     
                 default:
                     break;
@@ -303,13 +324,13 @@ void StudentWorld::AllocateActor(int x, int y, string type){
 }
 
 
-//PICKS RANDOM ALIVE INSECT, RETURN nullptr if no alive insects
-Actor* StudentWorld::PickRandomInsect (int x, int y){
+//PICKS RANDOM ALIVE INSECT not equal to self, RETURN nullptr if no alive insects
+Actor* StudentWorld::PickRandomInsect (int x, int y, Actor* self){
     std::vector<Actor*> InsectVec;
     
     std::list<Actor*>::const_iterator it;
     for( it = ActorGrid[x][y].begin(); it != ActorGrid[x][y].end();it++){
-        if((*it)->AmIInsect() && !((*it)->AmIDead()) ) {
+        if((*it)->AmIInsect() && !((*it)->AmIDead())  && (*it)!= self) {
             InsectVec.push_back(*it);
         }
     }
@@ -351,7 +372,7 @@ void StudentWorld::StunAllStunableActors(int x, int y, Actor* water){
     list<Actor*>::iterator it;
     for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
         if((*it)->IsStunable() && ((*it)->stun_er() != water)){
-            cerr<< "get stunned"<<endl;
+            cerr<< water << " stunned "<< (*it)<<endl;
             (*it)->stun();
             (*it)->StunnedMe(water);
         }

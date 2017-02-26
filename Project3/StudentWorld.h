@@ -38,7 +38,7 @@ public:
     void MoveActorTo (int destx, int desty, Actor* act);
 
     void AllocateActor(int x, int y, std::string type);
-    Actor* PickRandomInsect (int x, int y);
+    Actor* PickRandomInsect (int x, int y, Actor *self);
     
     int GiveInsectFood(int x, int y, int amt);
     

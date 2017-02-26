@@ -3,11 +3,13 @@
 
 #include "GraphObject.h"
 #include "GameConstants.h"
+#include "Compiler.h"
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 class StudentWorld;
 
 enum type {Baby, Adult,FoodType,Water,PoisonType,pebble,Pher0,Pher1,Pher2,Pher3,Ant0,Ant1,Ant2,Ant3 };
+enum ColonyNum {zero, one, two, three};
 
 class Actor:public GraphObject{
 public:
@@ -25,11 +27,9 @@ public:
     virtual void doSomething() = 0;
     void died(bool died){isDead = died;}
     void set_health(int hp){m_health=hp;}
-    void set_type(type type){m_type = type;}
     
     StudentWorld* getWorld() const{return m_sw;}
     int get_health() const{ return m_health;}
-    type get_type() const {return m_type;}
     bool AmIDead() const {return isDead;}
     virtual void stun(){}
     virtual void poison(){}
@@ -49,7 +49,8 @@ public:
 
     void DirecMoved(Direction Moved){MovedDirec = Moved;}
     Direction WheredidIMove() const{return MovedDirec;}
-    
+
+protected:
     void FaceRandDirec(){
         Direction newDirection = static_cast<Direction>((randInt(1,4)));
         setDirection(newDirection);
@@ -78,13 +79,8 @@ public:
     }
     
     virtual void doSomething() = 0;
-    virtual bool eat(int amt);
-    void doInsectStuff();
-    virtual void sleep(){sleep_ticks--;}
     virtual void stun(){sleep_ticks += 2;}
     void die();
-    virtual bool Bite(int amt);
-    virtual void Move()=0;
     virtual void poison();
     
     virtual bool IsStunable() const{return true;}
@@ -92,6 +88,15 @@ public:
 
     bool AmISleep() const {return !(sleep_ticks<=0);}
     virtual bool AmIInsect() const{return true;}
+    
+protected:
+    void doInsectStuff();
+    virtual void sleep(){sleep_ticks--;}
+    virtual bool eat(int amt);
+    virtual bool Bite(int amt);
+    virtual void Move(){}
+
+
     
 private:
     int sleep_ticks;
@@ -108,12 +113,15 @@ public:
         DistToMove = randInt(2, 10);
     }
     
-    virtual void Move();
     void Moved1Spot(){DistToMove--;}
     void SetDistToZero(){DistToMove = 0;}
     int DistRemaining() const{ return DistToMove;}
     void PickDirection();
     
+protected:
+    virtual void Move();
+
+
 private:
     int DistToMove;
     
@@ -126,7 +134,6 @@ public:
     BabyGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_BABY_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 1)
     {
         set_health(500);
-        set_type(Baby);
     }
     
     virtual bool Bite(int amt){return false;}
@@ -142,7 +149,6 @@ public:
     AdultGrasshopper(StudentWorld* sWorld, int x, int y):Grasshopper(sWorld, IID_ADULT_GRASSHOPPER, x, y, static_cast<Direction>((randInt(1,4))), 1)
     {
         set_health(1600);
-        set_type(Adult);
 
     }
     
@@ -153,15 +159,9 @@ public:
     virtual void poison(){}
 
 private:
-    bool Jump();
-    
-    bool WillIBite(){
-        return (randInt(0, 2)==0);
-    }
-    bool WillIJump(){
-        return (randInt(0, 9)==0);
-    }
-
+    void Jump();
+    bool WillIBite();
+    bool WillIJump();
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,14 +170,13 @@ private:
 
 class Ant:public Insect{
 public:
-    Ant(StudentWorld* sWorld, int AntID, type AntType, int x, int y):Insect(sWorld, AntID, x, y,static_cast<Direction>((randInt(1,4))), 1){
-        set_type(AntType);
+    Ant(StudentWorld* sWorld, int AntID, ColonyNum Num, int x, int y):Insect(sWorld, AntID, x, y,static_cast<Direction>((randInt(1,4))), 1){
         set_health(1500);
         WasBitten=false;
         WasBlocked=false;
         lastRandomNumber = 0;
         startInstructCount = 0;
-        
+        m_colony=Num;
     }
     
 private:
@@ -185,12 +184,30 @@ private:
     bool WasBlocked;
     int lastRandomNumber;
     int startInstructCount;
+    ColonyNum m_colony;
 };
 
 class AntHill:public Insect{
 public:
+    AntHill(StudentWorld *sWorld, ColonyNum Num, int x, int y, Compiler *comp):Insect(sWorld, IID_ANT_HILL, x, y,right, 2){
+        set_health(8999);
+        m_compiler = comp;
+        m_colony=Num;
+    }
     
+    ~AntHill(){
+        delete m_compiler;
+    }
+    
+    virtual void doSomething(){}
+    virtual bool IsStunnable() {return false;}
+    virtual bool IsPoisonable() const{return false;}
+    virtual bool AmIInsect() const{return false;}
+
+
 private:
+    Compiler *m_compiler;
+    ColonyNum m_colony;
 };
 
 
@@ -205,7 +222,6 @@ class Food: public Actor{
 public:
     Food(StudentWorld* sWorld,int x, int y, int food):Actor( sWorld, IID_FOOD, x, y, right, 2){
         set_health(food);
-        set_type(FoodType);
 
     }
 
@@ -223,14 +239,14 @@ private:
 
 class Pheromone: public Actor{
 public:
-    Pheromone(StudentWorld* sWorld, int PheromoneID,type PherType, int x, int y):Actor(sWorld, PheromoneID, x, y,right,2){
+    Pheromone(StudentWorld* sWorld, int PheromoneID,ColonyNum Num, int x, int y):Actor(sWorld, PheromoneID, x, y,right,2){
         set_health(256);
-        set_type(PherType);
+        m_colony=Num;
     }
     
     virtual void doSomething();
 private:
-    
+    ColonyNum m_colony;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +266,6 @@ private:
 class PoolOfWater:public PuddleBase{
 public:
     PoolOfWater(StudentWorld *sWorld, int x, int y):PuddleBase(sWorld, IID_WATER_POOL, x, y){
-        set_type(Water);
 
     }
     
@@ -262,7 +277,6 @@ private:
 class Poison:public PuddleBase{
 public:
     Poison(StudentWorld *sWorld, int x, int y):PuddleBase(sWorld, IID_POISON, x, y){
-        set_type(PoisonType);
 
     }
     virtual void doSomething();
@@ -279,9 +293,7 @@ class Pebble:public Actor{
 public:
     Pebble(StudentWorld* sWorld, int x, int y):Actor(sWorld, IID_ROCK, x, y, right, 1){
         set_health(0);
-        set_type(pebble);
 
-        //        std::cerr << "(" << getX() <<"," << getY()<< ") ";
     }
     
     virtual void doSomething(){    }

@@ -59,7 +59,7 @@ bool Insect::eat(int amt){
 
 //Bites a random target at same location
 bool Insect::Bite(int amt){
-    Actor* target = getWorld()->PickRandomInsect(getX(), getY());
+    Actor* target = getWorld()->PickRandomInsect(getX(), getY(), this);
     if(target!=nullptr){
         target->set_health(target->get_health() - amt);
         
@@ -72,7 +72,7 @@ bool Insect::Bite(int amt){
             AdultGrasshopper* ap =dynamic_cast<AdultGrasshopper*>(target);
             if(ap!=nullptr){
                 if(randInt(0, 1)==0){
-                    cerr<< "(" << target->getX() << "," << target->getY()<< ") Bite-back " << "(" << getX() << "," << getY()<< ")" <<endl;
+                    cerr<< target<< " (" << target->getX() << "," << target->getY()<< ") Bite-back " <<  this<< " (" << getX() << "," << getY()<< ")" <<endl;
                     ap->Bite(50);
                 }
             }
@@ -236,7 +236,8 @@ void AdultGrasshopper::doSomething(){
     if(WillIBite()){
         Bite(50);
     }
-    else if (WillIJump() && Jump()){
+    else if (WillIJump()){
+        Jump();
     }
     else{
         if(eat(200)){
@@ -252,15 +253,16 @@ void AdultGrasshopper::doSomething(){
     
 }
 
-//Jumps an Adult Grasshopper to a random location within a circular radius of 10
-//If successful returns true, otherwise returns false(i.e all positions within radius of 10 are blocked)
-bool AdultGrasshopper::Jump(){
+//Jumps an Adult Grasshopper to a random location within a circular radius of 10 not including current location
+void AdultGrasshopper::Jump(){
     double m_x = getX();
     double m_y = getY();
     std::vector<pair<double,double>> JumpVec;
     
-    for (double i = 1; i<VIEW_WIDTH; i+=1){
-        for (double j = 1; j<VIEW_HEIGHT; j+=1){
+    for (double i = 0; i<VIEW_WIDTH; i+=1){
+        for (double j = 0; j<VIEW_HEIGHT; j+=1){
+           if(i== m_x || j == m_y)
+               continue;
             double x_dist = abs(m_x - i);
             double y_dist = abs(m_y - j);
             double radius = sqrt(pow(x_dist, 2) + pow(y_dist, 2));
@@ -277,11 +279,34 @@ bool AdultGrasshopper::Jump(){
         getWorld()->MoveActorTo(destX, destY, this);
        moveTo(destX, destY);
        // cerr<< "(" <<getX() << " " << getY() << ")" << endl;
-        return true;
 
     }
-    return false;
 
+}
+bool AdultGrasshopper::WillIBite(){
+    bool BiteChance = (randInt(0, 2)==0);
+    return BiteChance;
+}
+
+//If there is another place to jump to return true 1/10 of the time otherwise false
+bool AdultGrasshopper::WillIJump(){ double m_x = getX();
+    double m_y = getY();
+    std::vector<pair<double,double>> JumpVec;
+    
+    for (double i = 0; i<VIEW_WIDTH; i+=1){
+        for (double j = 0; j<VIEW_HEIGHT; j+=1){
+            if(i== m_x || j == m_y)
+                continue;
+            double x_dist = abs(m_x - i);
+            double y_dist = abs(m_y - j);
+            double radius = sqrt(pow(x_dist, 2) + pow(y_dist, 2));
+            if(radius <=10 && !(getWorld()->Blocked(i, j))){
+                return (randInt(0, 9)==0);
+            }
+        }
+    }
+    return false;
+    
 }
 
 
