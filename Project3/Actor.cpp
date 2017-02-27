@@ -317,7 +317,6 @@ bool AdultGrasshopper::WillIJump(){
 ///////////////////////                 ANT CODE                    ////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 void Ant::doSomething(){
-    m_ic = 0;
     bool MustReturn = false;
     
     doInsectStuff();
@@ -429,7 +428,7 @@ bool Ant::RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn){
     }
     else if (c.opcode == Compiler::faceRandomDirection){
         FaceRandDirec();
-       // MustReturn=true;
+       MustReturn=true;
         ic++;
     }
     else if (c.opcode == Compiler::rotateClockwise){
