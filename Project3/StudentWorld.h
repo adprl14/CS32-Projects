@@ -27,6 +27,10 @@ public:
         for(int i = 0; i<4; i++){
             compilerForEntrant[i] = nullptr;
         }
+        for(int i = 0; i<4; i++){
+            ColonyName[i] = "";
+        }
+
     }
     
     virtual ~StudentWorld();
@@ -69,6 +73,7 @@ public:
     int GetWinningAntNumber();
     bool isThereAWinningAnt();
     std::string GetWinningAntName();
+    std::string getAntName(int colonyNum);
     std::string getDisplayText();
 
     
@@ -79,6 +84,7 @@ private:
     int Ticks;
     std::pair<int,int> antsProducedBy[4];
     std::pair<int,int> ColonyCoord[4];
+    std::string ColonyName[4];
     Compiler *compilerForEntrant[4];
 };
 

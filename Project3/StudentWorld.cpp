@@ -125,6 +125,7 @@ StudentWorld::~StudentWorld(){
                     ActorGrid[i][j].push_back(ah0);
                     ColonyCoord[0].first=i;
                     ColonyCoord[0].second=j;
+                    ColonyName[0] = compilerForEntrant[0]->getColonyName();
                 }
                     break;
                     
@@ -134,6 +135,7 @@ StudentWorld::~StudentWorld(){
                     ActorGrid[i][j].push_back(ah1);
                     ColonyCoord[1].first=i;
                     ColonyCoord[1].second=j;
+                    ColonyName[1] = compilerForEntrant[1]->getColonyName();
                 }
                     break;
                 
@@ -143,6 +145,7 @@ StudentWorld::~StudentWorld(){
                     ActorGrid[i][j].push_back(ah2);
                     ColonyCoord[2].first=i;
                     ColonyCoord[2].second=j;
+                    ColonyName[2] = compilerForEntrant[2]->getColonyName();
                 }
                     break;
                 
@@ -152,6 +155,7 @@ StudentWorld::~StudentWorld(){
                     ActorGrid[i][j].push_back(ah3);
                     ColonyCoord[3].first=i;
                     ColonyCoord[3].second=j;
+                    ColonyName[3] = compilerForEntrant[3]->getColonyName();
                 }
                     break;
                     
@@ -642,9 +646,10 @@ int StudentWorld::GetWinningAntNumber(){
     
     for(int j = 0; j<4; j++){
         if(temp[3] == antsProducedBy[j])
-            return j;
+            if(isThereAWinningAnt())
+                return j;
     }
-    return randInt(0,3);
+    return -1;
 }
 
 Actor* StudentWorld::GetWinningAnt(){
@@ -662,21 +667,36 @@ Actor* StudentWorld::GetWinningAnt(){
     return nullptr;
 }
 
+std::string StudentWorld::getAntName(int colonyNum){
+    return ColonyName[colonyNum];
+}
+
 
 std::string StudentWorld::GetWinningAntName(){
-    AntHill* curWinner = dynamic_cast<AntHill*>(GetWinningAnt());
-    if(curWinner!=nullptr){
-        return curWinner->getCompiler()->getColonyName();
-    }
-    return "";
+    int WinNum =GetWinningAntNumber();
+    if(WinNum==-1)
+       return "";
+    
+    return ColonyName[WinNum];
 }
 
 std::string StudentWorld::getDisplayText(){
     ostringstream oss;
+    int WinNum = GetWinningAntNumber();
     oss<< "Ticks:";
-    oss << setw(5) << 2000-Ticks;
+    oss << setw(5) << 2001-Ticks << " -";
     for(int i = 0; i<4; i++){
-        
+        string name = getAntName(i);
+        if(i == WinNum){
+            oss<< "  "<< name<<"*: ";
+            oss.fill('0');
+            oss<< setw(2) << antsProducedBy[i].first;
+        }
+        else{
+            oss<< "  "<< name<<": ";
+            oss.fill('0');
+            oss<< setw(2) << antsProducedBy[i].first;
+        }
     }
     return oss.str();
 }

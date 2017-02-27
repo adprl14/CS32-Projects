@@ -684,7 +684,9 @@ void AntHill::doSomething(){
     }
     
     if(getWorld()->isThereFood(getX(), getY())){
-        eat(ANTHILL_APPETITE);
+        if(eat(ANTHILL_APPETITE)){
+            cerr<< "Anthill Nom"<<endl;
+        }
         return;
     }
     
