@@ -421,6 +421,8 @@ bool Ant::RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn){
         if( EvaluateIf(c.operand1)){
             ic = stoi(c.operand2);
         }
+        else
+            ic++;
     }
     else if (c.opcode == Compiler::emitPheromone){
         MakePheromone(getColony());
@@ -460,9 +462,10 @@ bool Ant::RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn){
         ic++;
     }
     else if (c.opcode == Compiler::dropFood){
-        FoodDrop();
-        if(getFood()==0);
+        if(getFood()>0){
+            FoodDrop();
             MustReturn=true;
+        }
         ic++;
     }
     else if (c.opcode == Compiler::eatFood){
@@ -519,9 +522,9 @@ void Ant::rotateTheAntCounterClockwise(){
 }
 
 void Ant::FoodPickUp(){
-    int PickUpAmt(0);
+    int PickUpAmt=0;
     if(getFood()<MAX_ANT_FOOD){
-        if(MAX_ANT_FOOD-getFood()>=400)
+        if((MAX_ANT_FOOD-getFood())>=400)
             PickUpAmt = 400;
         else
             PickUpAmt = MAX_ANT_FOOD-getFood();
@@ -678,13 +681,14 @@ void AntHill::doSomething(){
     set_health(get_health()-1);
    
     if(get_health() <= 0){
+        cerr<< "Anthill" << getColony() << " died" << endl;
         died(true);
         return;
     }
-    
+    cerr<< "Anthill" << getColony() << " health: " << get_health() << endl;
     if(getWorld()->isThereFood(getX(), getY())){
         if(eat(ANTHILL_APPETITE)){
-            cerr<< "Anthill Nom"<<endl;
+            cerr<< "Anthill"<< getColony()<< " Nom"<<endl;
         }
         return;
     }

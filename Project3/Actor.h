@@ -208,6 +208,7 @@ class Ant:public AntBase{
 public:
     Ant(StudentWorld* sWorld, int AntID, int Num, int x, int y, Compiler *comp):AntBase(sWorld, AntID, Num, x, y,static_cast<Direction>((randInt(1,4))),1, comp){
         set_health(1500);
+        m_food = 0;
         WasBitten=false;
         WasBlocked=false;
         lastRandomNumber = 0;

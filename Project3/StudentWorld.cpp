@@ -526,7 +526,7 @@ void StudentWorld::StunAllStunableActors(int x, int y, Actor* water){
     list<Actor*>::iterator it;
     for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
         if((*it)->IsStunable() && ((*it)->stun_er() != water)){
-            cerr<< water << " stunned "<< (*it)<<endl;
+            //cerr<< water << " stunned "<< (*it)<<endl;
             (*it)->stun();
             (*it)->StunnedMe(water);
         }
@@ -537,10 +537,10 @@ void StudentWorld::PoisonAllPoisonableActors(int x, int y, Actor* poison){
     list<Actor*>::iterator it;
     for(it = ActorGrid[x][y].begin();it != ActorGrid[x][y].end(); it++) {
         if((*it)->IsPoisonable()&& ((*it)->poison_er()!= poison)){
-            cerr<<"poisoning " << (*it)->get_health();
+            //cerr<<"poisoning " << (*it)->get_health();
             (*it)->poison();
             (*it)->PoisonedMe(poison);
-            cerr<<" to " << (*it)->get_health() << endl;
+            //cerr<<" to " << (*it)->get_health() << endl;
             
             if((*it)->get_health()<=0){
                 (*it)->die();
@@ -695,7 +695,7 @@ std::string StudentWorld::getDisplayText(){
         else{
             oss<< "  "<< name<<": ";
             oss.fill('0');
-            oss<< setw(2) << antsProducedBy[i].first;
+            oss<< setw(2) << antsProducedBy[i].first<< " ants";
         }
     }
     return oss.str();
