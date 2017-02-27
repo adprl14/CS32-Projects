@@ -665,7 +665,7 @@ bool Ant::IsMyAntHill() const{
 }
 
 bool Ant::iAmWithInsect() const{
-    if(getWorld()->isDangerHere(getX(), getY(), this))
+    if(getWorld()->isEnemyHere(getX(), getY(), this))
         return true;
     return false;
 }

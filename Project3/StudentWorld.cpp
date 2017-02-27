@@ -43,7 +43,9 @@ StudentWorld::~StudentWorld(){
         compilerForEntrant[i] = new Compiler;
             if ( ! compilerForEntrant[i]->compile(fileNames[i], errorComp) )
             {
-                setError(fileNames[i] + " " + error);
+                setError(fileNames[i] + " " + errorComp);
+                cerr<< errorComp << endl;
+                exit(i);
             }
     }
     
@@ -277,6 +279,18 @@ bool StudentWorld::isDangerHere(const int &x, const int &y, const Ant* ptrToAnt)
     }
     return false;
 }
+
+bool StudentWorld::isEnemyHere(const int &x, const int &y, const Ant* ptrToAnt) const{
+    
+    std::list<Actor*>::const_iterator it;
+    for( it = ActorGrid[x][y].begin(); it != ActorGrid[x][y].end();it++){
+        if((*it)->AmIInsect() && ((*it)->getColony() != ptrToAnt->getColony()) )
+            return true;
+    }
+    return false;
+}
+
+
 
 
 bool StudentWorld::isPherInFront(const Actor* ptrToActor) const{

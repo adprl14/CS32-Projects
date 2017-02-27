@@ -46,6 +46,7 @@ public:
     bool isThereFood(int x, int y) const;
     bool isThereType(const int& x, const int& y, type Type) const;
     bool isDangerHere(const int &x, const int &y,const Ant* ptrToAnt) const;
+    bool isEnemyHere(const int &x, const int &y, const Ant* ptrToAnt) const;
     bool isPherInFront(const Actor* ptrToActor) const;
     Actor* GetFirstType(const int &x, const int &y, type Type);
 

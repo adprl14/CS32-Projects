@@ -239,7 +239,10 @@ private:
     bool IsMyAntHill() const;
     bool iAmWithInsect() const;
     bool RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn);
-    bool AntBite(){return Bite(ANT_BITE_STR);} //Ant version of Bite --> avoid confusion with amt
+    bool AntBite(){
+        std::cerr<<"ant is biting" << std::endl;
+        return Bite(ANT_BITE_STR);
+    } //Ant version of Bite --> avoid confusion with amt
     
     Compiler *m_compiler;
     bool WasBitten;
