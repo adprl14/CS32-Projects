@@ -19,11 +19,11 @@ using namespace std;
 ///////////////////////        HELPER CODE         /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
+//only insects will ever need this function
 bool Actor::AmIBlocked(const int& x,const int& y) const{
     if(m_sw->ActorListEmpty(x, y)){
         return false;
     }
-    //only insects will ever need this function
     if(m_sw->Blocked(x,y))
     {
         return true;
@@ -74,9 +74,13 @@ bool Insect::Bite(int amt){
             if(ap!=nullptr){
                 if(randInt(0, 1)==0){
                     cerr<< target<< " (" << target->getX() << "," << target->getY()<< ") Bite-back " <<  this<< " (" << getX() << "," << getY()<< ")" <<endl;
-                    ap->Bite(50);
+                    ap->Bite(GH_BITE_STR);
                 }
             }
+        }
+        if(target->get_type()==AntType){
+            Ant* antp = dynamic_cast<Ant*>(target);
+            antp->Bit(true);
         }
         
         return true;
@@ -203,7 +207,7 @@ void BabyGrasshopper::doSomething(){
 
 //makes BabyGrasshopper die off and allocates new AdultGrasshopper object in its place
 void BabyGrasshopper::Evolve(){
-    getWorld()->AllocateActor(getX(), getY(), "AdultGrasshopper");
+    getWorld()->AllocateActor(getX(), getY(), Adult);
     die();
 }
 
@@ -313,6 +317,9 @@ bool AdultGrasshopper::WillIJump(){
 ///////////////////////                 ANT CODE                    ////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 void Ant::doSomething(){
+    m_ic = 0;
+    bool MustReturn = false;
+    
     doInsectStuff();
     
     if(get_health() <= 0){
@@ -324,9 +331,25 @@ void Ant::doSomething(){
         sleep();
         return;
     }
-    FaceRandDirec();
-    Move();
-    stun();
+    
+    int InstructionsRun = 0;
+    Compiler::Command cmd;
+    
+    while(InstructionsRun < 10){
+        if(! getCompiler()->getCommand(m_ic, cmd)){
+            die();
+            return;
+        }
+        
+        if(RunCommand(cmd, m_ic, MustReturn))
+            InstructionsRun++;
+        else{
+            return;
+        }
+        if(MustReturn)
+            return;
+    }
+    
 }
 
 void Ant::Move(){
@@ -334,7 +357,8 @@ void Ant::Move(){
     switch (curDirec) {
         case GraphObject::right:
             if(AmIBlocked(getX()+1, getY())){
-                                stun();
+                stun();
+                WasBlocked=true;
                 return;
             }
             DirecMoved(right);
@@ -344,6 +368,7 @@ void Ant::Move(){
         case GraphObject::left:
             if(AmIBlocked(getX()-1, getY())){
                 stun();
+                WasBlocked=true;
                 return;
             }
             DirecMoved(left);
@@ -353,6 +378,7 @@ void Ant::Move(){
         case GraphObject::up:
             if(AmIBlocked(getX(), getY()+1)){
                 stun();
+                WasBlocked=true;
                 return;
             }
             DirecMoved(up);
@@ -362,6 +388,7 @@ void Ant::Move(){
         case GraphObject::down:
             if(AmIBlocked(getX(), getY()-1)){
                 stun();
+                WasBlocked=true;
                 return;
             }
             DirecMoved(down);            
@@ -371,52 +398,87 @@ void Ant::Move(){
         default:
             break;
     }
+    WasBlocked=false;
+    WasBitten=false;
     StunnedMe(nullptr);
     PoisonedMe(nullptr);
     
 }
 
-bool Ant::RunCommand(const Compiler::Command& c){
+bool Ant::AmIAnt() const{
+    return true;
+}
+
+
+bool Ant::RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn){
+    MustReturn=false;
+    if(c.opcode == Compiler::invalid)
+        return false;
     
-    if (c.opcode == Compiler::goto_command){
-        
+    else if (c.opcode == Compiler::goto_command){
+        ic = stoi(c.operand1);
     }
     else if (c.opcode == Compiler::if_command){
-            
+        if( EvaluateIf(c.operand1)){
+            ic = stoi(c.operand2);
+        }
     }
     else if (c.opcode == Compiler::emitPheromone){
-            
+        MakePheromone(getColony());
+        ic++;
     }
     else if (c.opcode == Compiler::faceRandomDirection){
-            
+        FaceRandDirec();
+       // MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::rotateClockwise){
         rotateTheAntClockwise();
+        MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::rotateCounterClockwise){
         rotateTheAntCounterClockwise();
+        MustReturn=true;
+        ic++;
     }
-    
     else if (c.opcode == Compiler::moveForward){
         Move();
+        if(WheredidIMove()!=none)
+            MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::bite){
-        AntBite();
+        if(AntBite())
+            MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::pickupFood){
+        int PrevFood = getFood();
         FoodPickUp();
+        if(PrevFood<getFood())
+            MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::dropFood){
         FoodDrop();
+        if(getFood()==0);
+            MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::eatFood){
-        
+        int PrevHealth = get_health();
+        eat();
+        if(PrevHealth< get_health())
+            MustReturn=true;
+        ic++;
     }
     else if (c.opcode == Compiler::generateRandomNumber){
-        
+        lastRandomNumber= generateRandomNumberForAnt(stoi(c.operand1));
+        ic++;
     }
     
-    return false;
+    return true;
 }
 
 void Ant::rotateTheAntClockwise(){
@@ -476,6 +538,137 @@ void Ant::FoodDrop(){
     setFood(0);
 }
 
+int Ant::generateRandomNumberForAnt(int Number){
+    return randInt(0, Number-1);
+}
+
+bool Ant::eat(int amt){
+    if(getFood()<=0)
+        return false;
+    
+    if(getFood()>=amt){
+        set_health(get_health()+amt);
+        setFood(getFood()-amt);
+    }
+    else{
+        set_health(get_health() + getFood());
+        setFood(0);
+    }
+    return true;
+}
+
+void Ant::MakePheromone(int Num){
+    type PherType;
+    switch (Num) {
+        case 0:
+            PherType=Pher0;
+            break;
+        case 1:
+            PherType=Pher1;
+            break;
+        case 2:
+            PherType=Pher2;
+            break;
+        case 3:
+            PherType=Pher3;
+            break;
+        default:
+            break;
+    }
+    if(getWorld()->isThereType(getX(), getY(), PherType)){
+        getWorld()->addPherTo(getX(), getY(), PherType );
+    }
+    else{
+        getWorld()->MakeType(getX(), getY(), PherType );
+    }
+}
+
+bool Ant::EvaluateIf(string op1){
+    if(op1 == "0"){
+        if(IsDangerFront())
+            return true;
+    }
+    else if(op1 == "1"){
+        if(getWorld()->isPherInFront(this))
+            return true;
+    }
+    else if(op1 == "2"){
+        if(WasBitten)
+            return true;
+    }
+    else if(op1 == "3"){
+        if(getFood()>0)
+            return true;
+    }
+    else if(op1 == "4"){
+        if(get_health() <= 25)
+            return true;
+    }
+    else if(op1 == "5"){
+        if(IsMyAntHill())
+            return true;
+    }
+    else if(op1 == "6"){
+        if(getWorld()->isThereFood(getX(), getY()))
+            return true;
+    }
+    else if(op1 == "7"){
+        if(iAmWithInsect())
+            return true;
+    }
+    else if(op1 == "8"){
+        if(WasBlocked)
+            return true;
+    }
+    else if(op1 == "9"){
+        if(lastRandomNumber==0)
+            return true;
+    }
+    return false;
+}
+
+bool Ant::IsDangerFront() const{
+    Direction Facing = getDirection();
+    int checkX=getX();
+    int checkY=getY();
+    switch(Facing){
+        case GraphObject::up:
+            checkY++;
+            break;
+        case GraphObject::right:
+            checkX++;
+            break;
+        case GraphObject::left:
+            checkX--;
+            break;
+        case GraphObject::down:
+            checkY--;
+            break;
+        default:
+            return false;
+    }
+
+    if(getWorld()->isDangerHere(checkX,checkY,this))
+        return true;
+    
+    return false;
+}
+
+bool Ant::IsMyAntHill() const{
+    AntHill* SomeHill= dynamic_cast<AntHill*>( getWorld()->GetFirstType(getX(),getY(),Hill));
+    if(SomeHill==nullptr)
+        return false;
+    
+    return(SomeHill->getColony() == getColony());
+}
+
+bool Ant::iAmWithInsect() const{
+    if(getWorld()->isDangerHere(getX(), getY(), this))
+        return true;
+    return false;
+}
+
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -491,7 +684,7 @@ void AntHill::doSomething(){
     }
     
     if(getWorld()->isThereFood(getX(), getY())){
-        eat(10000);
+        eat(ANTHILL_APPETITE);
         return;
     }
     

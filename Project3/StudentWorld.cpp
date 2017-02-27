@@ -4,6 +4,9 @@
 #include "Compiler.h"
 #include "Actor.h"
 #include "Field.h"
+#include <iostream>
+#include <iomanip>  // defines the manipulator setwf
+#include <sstream>  // defines the type std::ostringstream
 #include <string>
 #include<list>
 using namespace std;
@@ -118,7 +121,7 @@ StudentWorld::~StudentWorld(){
                 
                 case Field::anthill0:
                 {
-                    ah0 = new AntHill(this ,zero,i,j, compilerForEntrant[0]);
+                    ah0 = new AntHill(this ,0,i,j, compilerForEntrant[0]);
                     ActorGrid[i][j].push_back(ah0);
                     ColonyCoord[0].first=i;
                     ColonyCoord[0].second=j;
@@ -127,7 +130,7 @@ StudentWorld::~StudentWorld(){
                     
                 case Field::anthill1:
                 {
-                    ah1 = new AntHill(this ,one,i,j, compilerForEntrant[1]);
+                    ah1 = new AntHill(this ,1,i,j, compilerForEntrant[1]);
                     ActorGrid[i][j].push_back(ah1);
                     ColonyCoord[1].first=i;
                     ColonyCoord[1].second=j;
@@ -136,7 +139,7 @@ StudentWorld::~StudentWorld(){
                 
                 case Field::anthill2:
                 {
-                    ah2 = new AntHill(this ,two,i,j, compilerForEntrant[2]);
+                    ah2 = new AntHill(this ,2,i,j, compilerForEntrant[2]);
                     ActorGrid[i][j].push_back(ah2);
                     ColonyCoord[2].first=i;
                     ColonyCoord[2].second=j;
@@ -145,7 +148,7 @@ StudentWorld::~StudentWorld(){
                 
                 case Field::anthill3:
                 {
-                    ah3 = new AntHill(this ,three,i,j, compilerForEntrant[3]);
+                    ah3 = new AntHill(this ,3,i,j, compilerForEntrant[3]);
                     ActorGrid[i][j].push_back(ah3);
                     ColonyCoord[3].first=i;
                     ColonyCoord[3].second=j;
@@ -178,6 +181,8 @@ int StudentWorld::move()
         }
         return GWSTATUS_NO_WINNER;
     }
+    
+    setGameStatText(getDisplayText());
     
     return GWSTATUS_CONTINUE_GAME;
 
@@ -247,6 +252,70 @@ bool StudentWorld::isThereFood(int x, int y) const{
     }
     return false;
 }
+
+
+bool StudentWorld::isThereType(const int &x, const int &y, type Type) const{
+    std::list<Actor*>::const_iterator it;
+    for( it = ActorGrid[x][y].begin(); it != ActorGrid[x][y].end();it++){
+        if((*it)->get_type() == Type && !((*it)->AmIDead()) ){
+            return true;
+        }
+    }
+    return false;
+}
+
+bool StudentWorld::isDangerHere(const int &x, const int &y, const Ant* ptrToAnt) const{
+        
+    std::list<Actor*>::const_iterator it;
+    for( it = ActorGrid[x][y].begin(); it != ActorGrid[x][y].end();it++){
+        if(((*it)->AmIInsect() && ((*it)->getColony() != ptrToAnt->getColony()) ) || (*it)->AmIPuddle()  )
+            return true;
+    }
+    return false;
+}
+
+
+bool StudentWorld::isPherInFront(const Actor* ptrToActor) const{
+    Actor::Direction Facing = ptrToActor->getDirection();
+    int checkX=ptrToActor->getX();
+    int checkY=ptrToActor->getY();
+    switch(Facing){
+        case GraphObject::up:
+            checkY++;
+            break;
+        case GraphObject::right:
+            checkX++;
+            break;
+        case GraphObject::left:
+            checkX--;
+            break;
+        case GraphObject::down:
+            checkY--;
+            break;
+        default:
+            return false;
+    }
+    
+    std::list<Actor*>::const_iterator it;
+    for( it = ActorGrid[checkX][checkY].begin(); it != ActorGrid[checkX][checkY].end();it++){
+        if((*it)->AmIPher() )
+            return true;
+    }
+    return false;
+}
+
+Actor* StudentWorld::GetFirstType(const int &x, const int &y, type Type){
+    std::list<Actor*>::const_iterator it;
+    for( it = ActorGrid[x][y].begin(); it != ActorGrid[x][y].end();it++){
+        if((*it)->get_type() == Type)
+            return (*it);
+    }
+    return nullptr;
+}
+
+
+
+
 
 //Adds food of amt amount to the Food Object at (x,y). If no Food Object a new one is allocated with amt health
 void StudentWorld::AddFood(int x, int y, int amt){
@@ -380,9 +449,25 @@ void StudentWorld::MoveActorTo (int destx, int desty, Actor* act){
 
 
 //Dynamically allocates new Actor of class "type" into ActorGrid[x][y]
-void StudentWorld::AllocateActor(int x, int y, string type){
-    if(type == "AdultGrasshopper"){
+void StudentWorld::AllocateActor(int x, int y, type Type){
+    if(Type == Adult){
         Actor *p = new AdultGrasshopper(this, x, y);
+        ActorGrid[x][y].push_back(p);
+    }
+    if(Type == Pher0){
+        Actor *p = new Pheromone(this,IID_PHEROMONE_TYPE0, x, y,Pher0);
+        ActorGrid[x][y].push_back(p);
+    }
+    if(Type == Pher1){
+        Actor *p = new Pheromone(this,IID_PHEROMONE_TYPE1, x, y,Pher1);
+        ActorGrid[x][y].push_back(p);
+    }
+    if(Type == Pher2){
+        Actor *p = new Pheromone(this,IID_PHEROMONE_TYPE2, x, y,Pher2);
+        ActorGrid[x][y].push_back(p);
+    }
+    if(Type == Pher3){
+        Actor *p = new Pheromone(this,IID_PHEROMONE_TYPE3, x, y,Pher3);
         ActorGrid[x][y].push_back(p);
     }
 }
@@ -466,6 +551,49 @@ void StudentWorld::PoisonAllPoisonableActors(int x, int y, Actor* poison){
 ////////////////////////         TRACKING ANTS            /////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
+void StudentWorld::MakeType(const int&x, const int &y, type Type){
+    Actor *p = nullptr;
+    switch(Type){
+        case Pher0:
+            p = new Pheromone(this, IID_PHEROMONE_TYPE0, x,y,Pher0);
+            ActorGrid[x][y].push_back(p);
+            break;
+        case Pher1:
+            p = new Pheromone(this, IID_PHEROMONE_TYPE1, x,y,Pher1);
+            ActorGrid[x][y].push_back(p);
+            break;
+
+        case Pher2:
+            p = new Pheromone(this, IID_PHEROMONE_TYPE2, x,y,Pher2);
+            ActorGrid[x][y].push_back(p);
+            break;
+
+        case Pher3:
+            p = new Pheromone(this, IID_PHEROMONE_TYPE3, x,y,Pher3);
+            ActorGrid[x][y].push_back(p);
+            break;
+        default:
+            break;
+    }
+}
+
+void StudentWorld::addPherTo(const int&x,const int&y,type PherType){
+    list<Actor*>::iterator it;
+    for( it = ActorGrid[x][y].begin();it != ActorGrid[x][y].begin();it++){
+        if((*it)->get_type()==PherType)
+            break;
+    }
+    if((*it)->get_health()<768)
+    {
+        if((768-(*it)->get_health()) <256)
+            (*it)->set_health(768);
+        else
+             (*it)->set_health((*it)->get_health() + 256);
+    }
+}
+
+
+
 void StudentWorld::MakeAnt(int x, int y, int Num, Compiler *comp){
     int ID;
     switch(Num){
@@ -541,6 +669,16 @@ std::string StudentWorld::GetWinningAntName(){
         return curWinner->getCompiler()->getColonyName();
     }
     return "";
+}
+
+std::string StudentWorld::getDisplayText(){
+    ostringstream oss;
+    oss<< "Ticks:";
+    oss << setw(5) << 2000-Ticks;
+    for(int i = 0; i<4; i++){
+        
+    }
+    return oss.str();
 }
 
 

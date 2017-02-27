@@ -6,12 +6,17 @@
 #include "Compiler.h"
 
 const int MAX_ANT_FOOD = 1800;
+const int AMT_ANT_EATS = 100;
+const int GH_BITE_STR = 50;
+const int ANT_BITE_STR = 15;
+const int ANTHILL_APPETITE = 10000;
+
+
 
 // Students:  Add code to this file, Actor.cpp, StudentWorld.h, and StudentWorld.cpp
 class StudentWorld;
 
 enum type {Baby, Adult,FoodType,Water,PoisonType,Rock,Pher0,Pher1,Pher2,Pher3,AntType,Hill };
-enum ColonyNum {zero, one, two, three};
 
 class Actor:public GraphObject{
 public:
@@ -42,6 +47,9 @@ public:
     virtual bool AmIInsect() const {return false;}
     virtual bool AmIFood() const{return false;}
     virtual bool AmIAnthill() const {return false;}
+    virtual bool AmIAnt() const {return false;}
+    virtual bool AmIPher() const {return false;}
+    virtual bool AmIPuddle() const {return false;}
     virtual bool IsStunable() const{return false;}
     virtual bool IsPoisonable() const{return false;}
     Actor* poison_er() const {return PoisonedBy;}
@@ -55,6 +63,7 @@ public:
     
     void set_type(type ActType){m_type =ActType;}
     type  get_type(){return m_type;}
+    virtual int getColony() const {return -1;}
     
 protected:
     void FaceRandDirec(){
@@ -170,7 +179,7 @@ private:
     void Jump();
     bool WillIBite();
     bool WillIJump();
-    void GHbite(){Bite(50);} //Adult Grasshopper version of Bite (avoid amt confusion)
+    void GHbite(){Bite(GH_BITE_STR);} //Adult Grasshopper version of Bite (avoid amt confusion)
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +194,7 @@ public:
 
     }
    
-    int getColony() const {return m_colony;}
+    virtual int getColony() const {return m_colony;}
     Compiler* getCompiler()const{return m_compiler;}
 
     
@@ -210,14 +219,26 @@ public:
     virtual void Move();
     int getFood()const{return m_food;}
     void setFood(const int&x) {m_food = x;}
+    void Bit(const bool &bitten){WasBitten=bitten;}
+    void AntBlocked(const bool &block){WasBlocked=block;}
+    virtual bool AmIAnt() const;
+
+
 
 private:
     void rotateTheAntClockwise();
     void rotateTheAntCounterClockwise();
     void FoodPickUp();
     void FoodDrop();
-    bool RunCommand(const Compiler::Command& c);
-    void AntBite(){Bite(15);} //Ant version of Bite --> avoid confusion with amt
+    int generateRandomNumberForAnt(int Number);
+    virtual bool eat(int amt=MAX_ANT_FOOD);
+    void MakePheromone(int Num);
+    bool EvaluateIf(std::string op1);
+    bool IsDangerFront() const;
+    bool IsMyAntHill() const;
+    bool iAmWithInsect() const;
+    bool RunCommand(const Compiler::Command& c, int &ic, bool& MustReturn);
+    bool AntBite(){return Bite(ANT_BITE_STR);} //Ant version of Bite --> avoid confusion with amt
     
     Compiler *m_compiler;
     bool WasBitten;
@@ -289,6 +310,8 @@ public:
     }
     
     virtual void doSomething();
+    virtual bool AmIPher() const {return true;}
+
 private:
 };
 
@@ -302,6 +325,8 @@ public:
         set_health(0);
 
     }
+    virtual bool AmIPuddle() const {return true;}
+
 private:
     
 };

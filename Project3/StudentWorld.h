@@ -40,6 +40,11 @@ public:
     bool ActorListEmpty(int x, int y) const;
     bool Blocked(int x, int y) const;
     bool isThereFood(int x, int y) const;
+    bool isThereType(const int& x, const int& y, type Type) const;
+    bool isDangerHere(const int &x, const int &y,const Ant* ptrToAnt) const;
+    bool isPherInFront(const Actor* ptrToActor) const;
+    Actor* GetFirstType(const int &x, const int &y, type Type);
+
 
     void AddFood(int x, int y, int amt);
     void ResetMove();
@@ -48,7 +53,7 @@ public:
     void MoveActorTo (std::list<Actor*>::iterator it, Actor::Direction direc);
     void MoveActorTo (int destx, int desty, Actor* act);
 
-    void AllocateActor(int x, int y, std::string type);
+    void AllocateActor(int x, int y, type Type);
     Actor* PickRandomInsect (int x, int y, Actor *self);
     
     int GiveInsectFood(int x, int y, int amt);
@@ -56,12 +61,15 @@ public:
     void StunAllStunableActors (int x, int y, Actor* water);
     void PoisonAllPoisonableActors (int x, int y, Actor* poison);
     
+    void MakeType(const int&x,const int&y, type Type);
+    void addPherTo(const int&x,const int&y,type PherType);
     void MakeAnt(int x, int y,int Num, Compiler *comp);
     void AddAnt(int Num);
     Actor* GetWinningAnt();
     int GetWinningAntNumber();
     bool isThereAWinningAnt();
     std::string GetWinningAntName();
+    std::string getDisplayText();
 
     
 
